@@ -101,6 +101,11 @@ public:
         return m_value;
     }
 
+    std::wstring get_value() const
+    {
+        return m_value;
+    }
+
 private:
     object_t(const object_t&) = delete;
     object_t& operator=(const object_t&) = delete;
@@ -148,6 +153,32 @@ private:
         }
 
         return *obj;
+    }
+
+    object_t* get_obj_exists(const std::wstring& obj_name) const
+    {
+        auto it = m_objects.find(obj_name);
+        if (it != m_objects.end())
+        {
+            return it->second;
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
+    object_t* get_obj_exists(int index) const
+    {
+        auto it = m_array_objects.find(index);
+        if (it != m_array_objects.end())
+        {
+            return it->second;
+        }
+        else
+        {
+            return nullptr;
+        }
     }
 
     template<class T>
@@ -342,6 +373,89 @@ public:
         return false;
     }
 
+    std::wstring get_value(const wchar_t* path) const
+    {
+        if (!path)
+        {
+            return L"";
+        }
+
+        auto len = wcslen(path);
+        if (len <= 0)
+        {
+            return L"";
+        }
+
+        object_t* obj = nullptr;
+        size_t start = 0;
+        object_t::type_t next_type = object_t::OBJECT_TYPE_STRING;
+
+        for (size_t i = 0; i < len; i++)
+        {
+            if (path[i] == L'.' || path[i] == L':')
+            {
+                if (object_t::OBJECT_TYPE_STRING == next_type)
+                {
+                    obj = get_sub_obj_exists(obj, object_t::trim_as_wstring(&path[start], i - start));
+                }
+                else
+                {
+                    int obj_index = 0;
+                    if (object_t::trim_as_int(&path[start], i - start, obj_index))
+                    {
+                        obj = get_sub_obj_exists(obj, _wtoi(&path[start]));
+                    }
+                    else
+                    {
+                        return L"";
+                    }
+                }
+
+                if (!obj)
+                {
+                    return L"";
+                }
+
+                start = i + 1;
+                if (path[i] == L'.')
+                {
+                    next_type = object_t::OBJECT_TYPE_STRING;
+                }
+                else
+                {
+                    next_type = object_t::OBJECT_TYPE_ARRAY;
+                }
+            }
+            else
+            {
+                // noting to do
+            }
+
+            if (start >= len)
+            {
+                return L"";
+            }
+        }
+
+        if (len > start)
+        {
+            if (object_t::OBJECT_TYPE_STRING == next_type)
+            {
+                obj = get_sub_obj_exists(obj, object_t::trim_as_wstring(&path[start], len - start));
+            }
+            else
+            {
+                obj = get_sub_obj_exists(obj, _wtoi(&path[start]));
+            }
+        }
+
+        if (obj)
+        {
+            return obj->get_value();
+        }
+        return L"";
+    }
+
     std::wstring to_wstring() const
     {
         std::wostringstream out;
@@ -492,6 +606,19 @@ private:
         return *obj;
     }
 
+    object_t* get_obj_exists(const std::wstring& obj_name) const
+    {
+        auto it = m_objects.find(obj_name);
+        if (it != m_objects.end())
+        {
+            return it->second;
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
     object_t* get_obj_by_path(const wchar_t* path)
     {
         if (!path)
@@ -601,6 +728,31 @@ private:
             // 根节点不支持直接使用数组,转换为字符串object
             auto& obj = get_obj(std::to_wstring(index));
             return &obj;
+        }
+    }
+
+    object_t* get_sub_obj_exists(object_t* parent, const std::wstring& obj_name) const
+    {
+        if (parent)
+        {
+            return parent->get_obj_exists(obj_name);
+        }
+        else
+        {
+            return get_obj_exists(obj_name);
+        }
+    }
+
+    object_t* get_sub_obj_exists(object_t* parent, int index) const
+    {
+        if (parent)
+        {
+            return parent->get_obj_exists(index);
+        }
+        else
+        {
+            // 根节点不支持直接使用数组
+            return nullptr;
         }
     }
 

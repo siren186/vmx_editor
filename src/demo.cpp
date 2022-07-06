@@ -41,6 +41,12 @@ void test2()
     suc = vmx.set_value(L".32", L"UTF-32");
     suc = vmx.set_value(L"1.32:4", L"UTF-9");
     auto str = vmx.to_wstring();
+
+    std::wstring val1 = vmx.get_value(L"checkpoint.vmState.readOnly");
+    val1 = vmx.get_value(L"checkpoint.vmState.readOnly.sheet");
+    val1 = vmx.get_value(L"     hello   .   world  : 32  .   sheet");
+    val1 = vmx.get_value(L"10:11");
+    val1 = vmx.get_value(L"10.");
 }
 
 void test()
@@ -76,6 +82,6 @@ void test()
 
 int main()
 {
-    test4();
+    test2();
     return 0;
 }
