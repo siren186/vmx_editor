@@ -150,6 +150,18 @@ private:
         return *obj;
     }
 
+    template<class T>
+    void set_value(const T& t)
+    {
+        m_value = std::to_wstring(t);
+    }
+
+    template<>
+    void set_value(const bool& b)
+    {
+        m_value = b ? L"TRUE" : L"FALSE";
+    }
+
     void set_value(const wchar_t* val)
     {
         m_value = val ? val : L"";
@@ -284,6 +296,36 @@ public:
     object_t& operator[](const std::wstring& obj_name)
     {
         return get_obj(obj_name);
+    }
+
+    template<class T>
+    bool set_value(const wchar_t* path, const T& value)
+    {
+        m_last_error.clear();
+
+        auto obj = get_obj_by_path(path);
+        if (obj)
+        {
+            obj->set_value(value);
+            return true;
+        }
+
+        return false;
+    }
+
+    template<>
+    bool set_value(const wchar_t* path, const bool& value)
+    {
+        m_last_error.clear();
+
+        auto obj = get_obj_by_path(path);
+        if (obj)
+        {
+            obj->set_value(value);
+            return true;
+        }
+
+        return false;
     }
 
     bool set_value(const wchar_t* path, const wchar_t* value)
